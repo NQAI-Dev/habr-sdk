@@ -19,3 +19,9 @@ client = HabrClient(cookies="connect_sid=...")
 me = client.get_me()
 print(me["alias"], me["id"])
 ```
+
+## Тестирование
+```bash
+pytest
+```
+Тестовый набор изолирован от сети (mock urllib.request) и проверяет формирование URL, заголовков и разбор ответов.
