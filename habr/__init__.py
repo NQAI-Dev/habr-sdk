@@ -1,3 +1,15 @@
-from .client import HabrClient
+from .client import (
+    HabrClient,
+    HabrError,
+    HabrHTTPError,
+    HabrRateLimitError,
+    HabrTimeoutError,
+)
 
-__all__ = ["HabrClient"]
+__all__ = [
+    "HabrClient",
+    "HabrError",
+    "HabrHTTPError",
+    "HabrRateLimitError",
+    "HabrTimeoutError",
+]
