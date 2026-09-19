@@ -1,9 +1,9 @@
-import time
-import urllib.request
-import urllib.parse
-import urllib.error
 import json
-from typing import Dict, Any, Optional, List
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from typing import Any
 
 
 class HabrError(Exception):
@@ -42,8 +42,8 @@ class HabrClient:
 
     def __init__(
         self,
-        cookies: Optional[str] = None,
-        api_key: Optional[str] = None,
+        cookies: str | None = None,
+        api_key: str | None = None,
         hl: str = "ru",
         fl: str = "ru",
         timeout: float = 15.0,
@@ -62,11 +62,11 @@ class HabrClient:
         self,
         method: str,
         path: str,
-        params: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         url = f"{self.BASE_URL}{path}"
-        query_params: Dict[str, Any] = {"hl": self.hl, "fl": self.fl}
+        query_params: dict[str, Any] = {"hl": self.hl, "fl": self.fl}
         if params:
             query_params.update(params)
 
@@ -86,11 +86,13 @@ class HabrClient:
             headers["Content-Type"] = "application/json"
             body_bytes = json.dumps(data).encode("utf-8")
 
-        last_error: Optional[HabrError] = None
+        last_error: HabrError | None = None
         for attempt in range(self.retries + 1):
             if attempt > 0:
                 time.sleep(self.retry_delay * (2 ** (attempt - 1)))
-            req = urllib.request.Request(url, data=body_bytes, headers=headers, method=method)
+            req = urllib.request.Request(
+                url, data=body_bytes, headers=headers, method=method
+            )
             try:
                 with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                     raw = resp.read().decode("utf-8")
@@ -118,45 +120,49 @@ class HabrClient:
 
     # --- Users ---
 
-    def get_me(self) -> Dict[str, Any]:
+    def get_me(self) -> dict[str, Any]:
         """Получить текущий профиль авторизованного пользователя."""
         return self._request("GET", "/me")
 
-    def get_user_card(self, username: str) -> Dict[str, Any]:
+    def get_user_card(self, username: str) -> dict[str, Any]:
         """Получить карточку пользователя (рейтинг, карма, статистика)."""
         return self._request("GET", f"/users/{username}/card")
 
-    def get_user_whois(self, username: str) -> Dict[str, Any]:
+    def get_user_whois(self, username: str) -> dict[str, Any]:
         """Получить подробную информацию 'О себе' пользователя."""
         return self._request("GET", f"/users/{username}/whois")
 
-    def get_user_articles(self, username: str, page: int = 1) -> Dict[str, Any]:
+    def get_user_articles(self, username: str, page: int = 1) -> dict[str, Any]:
         """Список опубликованных статей пользователя."""
-        return self._request("GET", "/articles/", params={"user": username, "page": page})
+        return self._request(
+            "GET", "/articles/", params={"user": username, "page": page}
+        )
 
     # --- Articles ---
 
-    def get_article(self, article_id: str) -> Dict[str, Any]:
+    def get_article(self, article_id: str) -> dict[str, Any]:
         """Получить статью по ID."""
         return self._request("GET", f"/articles/{article_id}")
 
-    def get_article_comments(self, article_id: str) -> Dict[str, Any]:
+    def get_article_comments(self, article_id: str) -> dict[str, Any]:
         """Получить комментарии к статье."""
         return self._request("GET", f"/articles/{article_id}/comments")
 
     def get_articles_feed(
         self,
-        articles: Optional[List[str]] = None,
-        news: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        articles: list[str] | None = None,
+        news: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Пакетно получить статьи и новости по ID.
 
         `articles` — список ID статей, `news` — список ID новостей.
         Возвращает словари `articleRefs` / `newsRefs` в ответе API.
         """
         if not articles and not news:
-            raise ValueError("get_articles_feed requires at least one article or news id")
-        params: Dict[str, Any] = {}
+            raise ValueError(
+                "get_articles_feed requires at least one article or news id"
+            )
+        params: dict[str, Any] = {}
         if articles:
             params["articles"] = ",".join(str(a) for a in articles)
         if news:
@@ -165,14 +171,16 @@ class HabrClient:
 
     def get_comments_threads(
         self,
-        articles: Optional[List[str]] = None,
-        news: Optional[List[str]] = None,
-        comments: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        articles: list[str] | None = None,
+        news: list[str] | None = None,
+        comments: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Пакетно получить ветки комментариев по ID статей/новостей/комментариев."""
         if not (articles or news or comments):
-            raise ValueError("get_comments_threads requires at least one article, news, or comment id")
-        params: Dict[str, Any] = {}
+            raise ValueError(
+                "get_comments_threads requires at least one article, news, or comment id"
+            )
+        params: dict[str, Any] = {}
         if articles:
             params["articles"] = ",".join(str(a) for a in articles)
         if news:
@@ -183,6 +191,6 @@ class HabrClient:
 
     # --- Hubs ---
 
-    def get_hub_info(self, hub_alias: str) -> Dict[str, Any]:
+    def get_hub_info(self, hub_alias: str) -> dict[str, Any]:
         """Получить профиль хаба."""
         return self._request("GET", f"/hubs/{hub_alias}/profile")

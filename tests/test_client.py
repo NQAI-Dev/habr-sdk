@@ -1,7 +1,9 @@
 # Original tests (init, request plumbing, endpoints)
 import json
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from habr.client import HabrClient
 
 
@@ -24,7 +26,9 @@ def test_init_custom():
 @patch("urllib.request.urlopen")
 def test_request_get_params_and_headers(mock_urlopen):
     mock_resp = MagicMock()
-    mock_resp.read.return_value = json.dumps({"alias": "NQAI", "id": 123}).encode("utf-8")
+    mock_resp.read.return_value = json.dumps({"alias": "NQAI", "id": 123}).encode(
+        "utf-8"
+    )
     mock_resp.__enter__.return_value = mock_resp
     mock_urlopen.return_value = mock_resp
 
@@ -46,7 +50,9 @@ def test_request_get_params_and_headers(mock_urlopen):
 @patch("urllib.request.urlopen")
 def test_get_user_card(mock_urlopen):
     mock_resp = MagicMock()
-    mock_resp.read.return_value = json.dumps({"scoreStats": {"score": 42}}).encode("utf-8")
+    mock_resp.read.return_value = json.dumps({"scoreStats": {"score": 42}}).encode(
+        "utf-8"
+    )
     mock_resp.__enter__.return_value = mock_resp
     mock_urlopen.return_value = mock_resp
 
@@ -130,15 +136,11 @@ def test_empty_response(mock_urlopen):
     assert res == {}
 
 
-import json
 import urllib.error
 import urllib.request
 from unittest.mock import patch
 
-import pytest
-
 from habr.client import (
-    HabrClient,
     HabrError,
     HabrHTTPError,
     HabrRateLimitError,
@@ -168,7 +170,11 @@ class TestErrorHandling:
     def test_http_error_raises_habrhttperror_with_status_and_body(self):
         client = HabrClient()
         err = urllib.error.HTTPError(
-            "https://habr.com/kek/v2/me", 404, "Not Found", {}, None  # type: ignore[arg-type]
+            "https://habr.com/kek/v2/me",
+            404,
+            "Not Found",
+            {},
+            None,  # type: ignore[arg-type]
         )
         err.read = lambda: b'{"code": "NOT_FOUND"}'  # type: ignore[method-assign]
         with patch("urllib.request.urlopen", side_effect=err):
@@ -180,7 +186,11 @@ class TestErrorHandling:
     def test_429_raises_ratelimit_error(self):
         client = HabrClient()
         err = urllib.error.HTTPError(
-            "https://habr.com/kek/v2/me", 429, "Too Many Requests", {}, None  # type: ignore[arg-type]
+            "https://habr.com/kek/v2/me",
+            429,
+            "Too Many Requests",
+            {},
+            None,  # type: ignore[arg-type]
         )
         err.read = lambda: b"rate limited"  # type: ignore[method-assign]
         with patch("urllib.request.urlopen", side_effect=err):
@@ -191,7 +201,11 @@ class TestErrorHandling:
     def test_500_retried_then_succeeds(self):
         client = HabrClient(retries=2, retry_delay=0)
         err = urllib.error.HTTPError(
-            "https://habr.com/kek/v2/me", 500, "Server Error", {}, None  # type: ignore[arg-type]
+            "https://habr.com/kek/v2/me",
+            500,
+            "Server Error",
+            {},
+            None,  # type: ignore[arg-type]
         )
         err.read = lambda: b""  # type: ignore[method-assign]
         responses = [err, err, make_response({"alias": "nqai"})]
@@ -202,7 +216,11 @@ class TestErrorHandling:
     def test_500_exhausts_retries_raises_httperror(self):
         client = HabrClient(retries=1, retry_delay=0)
         err = urllib.error.HTTPError(
-            "https://habr.com/kek/v2/me", 503, "Unavailable", {}, None  # type: ignore[arg-type]
+            "https://habr.com/kek/v2/me",
+            503,
+            "Unavailable",
+            {},
+            None,  # type: ignore[arg-type]
         )
         err.read = lambda: b""  # type: ignore[method-assign]
         with patch("urllib.request.urlopen", side_effect=err) as mock_urlopen:
@@ -213,7 +231,11 @@ class TestErrorHandling:
     def test_429_not_retried(self):
         client = HabrClient(retries=2, retry_delay=0)
         err = urllib.error.HTTPError(
-            "https://habr.com/kek/v2/me", 429, "Too Many Requests", {}, None  # type: ignore[arg-type]
+            "https://habr.com/kek/v2/me",
+            429,
+            "Too Many Requests",
+            {},
+            None,  # type: ignore[arg-type]
         )
         err.read = lambda: b""  # type: ignore[method-assign]
         with patch("urllib.request.urlopen", side_effect=err) as mock_urlopen:
@@ -224,7 +246,11 @@ class TestErrorHandling:
     def test_404_not_retried(self):
         client = HabrClient(retries=2, retry_delay=0)
         err = urllib.error.HTTPError(
-            "https://habr.com/kek/v2/me", 404, "Not Found", {}, None  # type: ignore[arg-type]
+            "https://habr.com/kek/v2/me",
+            404,
+            "Not Found",
+            {},
+            None,  # type: ignore[arg-type]
         )
         err.read = lambda: b""  # type: ignore[method-assign]
         with patch("urllib.request.urlopen", side_effect=err) as mock_urlopen:
@@ -259,7 +285,9 @@ class TestErrorHandling:
 
     def test_timeout_passed_to_urlopen(self):
         client = HabrClient(timeout=7.5)
-        with patch("urllib.request.urlopen", return_value=make_response({})) as mock_urlopen:
+        with patch(
+            "urllib.request.urlopen", return_value=make_response({})
+        ) as mock_urlopen:
             client.get_me()
         assert mock_urlopen.call_args.kwargs.get("timeout") == 7.5
 
@@ -267,7 +295,9 @@ class TestErrorHandling:
 class TestArticlesFeed:
     def test_feed_joins_article_ids(self):
         client = HabrClient()
-        with patch("urllib.request.urlopen", return_value=make_response({"articleRefs": []})) as mock_urlopen:
+        with patch(
+            "urllib.request.urlopen", return_value=make_response({"articleRefs": []})
+        ) as mock_urlopen:
             client.get_articles_feed(articles=["100", "200"])
         url = mock_urlopen.call_args.args[0].full_url
         assert "articles=100%2C200" in url
@@ -275,7 +305,9 @@ class TestArticlesFeed:
 
     def test_feed_supports_news_ids(self):
         client = HabrClient()
-        with patch("urllib.request.urlopen", return_value=make_response({"newsRefs": []})) as mock_urlopen:
+        with patch(
+            "urllib.request.urlopen", return_value=make_response({"newsRefs": []})
+        ) as mock_urlopen:
             client.get_articles_feed(news=["5"])
         url = mock_urlopen.call_args.args[0].full_url
         assert "news=5" in url
@@ -289,7 +321,9 @@ class TestArticlesFeed:
 class TestCommentsThreads:
     def test_threads_articles_param(self):
         client = HabrClient()
-        with patch("urllib.request.urlopen", return_value=make_response({"commentRefs": []})) as mock_urlopen:
+        with patch(
+            "urllib.request.urlopen", return_value=make_response({"commentRefs": []})
+        ) as mock_urlopen:
             client.get_comments_threads(articles=["700"])
         url = mock_urlopen.call_args.args[0].full_url
         assert "articles=700" in url
@@ -297,7 +331,9 @@ class TestCommentsThreads:
 
     def test_threads_comments_param(self):
         client = HabrClient()
-        with patch("urllib.request.urlopen", return_value=make_response({"commentRefs": []})) as mock_urlopen:
+        with patch(
+            "urllib.request.urlopen", return_value=make_response({"commentRefs": []})
+        ) as mock_urlopen:
             client.get_comments_threads(comments=["1", "2"])
         url = mock_urlopen.call_args.args[0].full_url
         assert "comments=1%2C2" in url
