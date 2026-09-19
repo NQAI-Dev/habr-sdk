@@ -177,8 +177,7 @@ class TestErrorHandling:
             None,  # type: ignore[arg-type]
         )
         err.read = lambda: b'{"code": "NOT_FOUND"}'  # type: ignore[method-assign]
-        with patch("urllib.request.urlopen", side_effect=err):
-            with pytest.raises(HabrHTTPError) as exc_info:
+        with patch("urllib.request.urlopen", side_effect=err), pytest.raises(HabrHTTPError) as exc_info:
                 client.get_me()
         assert exc_info.value.status == 404
         assert "NOT_FOUND" in exc_info.value.body
@@ -193,8 +192,7 @@ class TestErrorHandling:
             None,  # type: ignore[arg-type]
         )
         err.read = lambda: b"rate limited"  # type: ignore[method-assign]
-        with patch("urllib.request.urlopen", side_effect=err):
-            with pytest.raises(HabrRateLimitError) as exc_info:
+        with patch("urllib.request.urlopen", side_effect=err), pytest.raises(HabrRateLimitError) as exc_info:
                 client.get_me()
         assert exc_info.value.status == 429
 
@@ -223,8 +221,7 @@ class TestErrorHandling:
             None,  # type: ignore[arg-type]
         )
         err.read = lambda: b""  # type: ignore[method-assign]
-        with patch("urllib.request.urlopen", side_effect=err) as mock_urlopen:
-            with pytest.raises(HabrHTTPError):
+        with patch("urllib.request.urlopen", side_effect=err) as mock_urlopen, pytest.raises(HabrHTTPError):
                 client.get_me()
         assert mock_urlopen.call_count == 2  # initial + 1 retry
 
@@ -238,8 +235,7 @@ class TestErrorHandling:
             None,  # type: ignore[arg-type]
         )
         err.read = lambda: b""  # type: ignore[method-assign]
-        with patch("urllib.request.urlopen", side_effect=err) as mock_urlopen:
-            with pytest.raises(HabrRateLimitError):
+        with patch("urllib.request.urlopen", side_effect=err) as mock_urlopen, pytest.raises(HabrRateLimitError):
                 client.get_me()
         assert mock_urlopen.call_count == 1
 
@@ -253,8 +249,7 @@ class TestErrorHandling:
             None,  # type: ignore[arg-type]
         )
         err.read = lambda: b""  # type: ignore[method-assign]
-        with patch("urllib.request.urlopen", side_effect=err) as mock_urlopen:
-            with pytest.raises(HabrHTTPError):
+        with patch("urllib.request.urlopen", side_effect=err) as mock_urlopen, pytest.raises(HabrHTTPError):
                 client.get_me()
         assert mock_urlopen.call_count == 1
 
@@ -262,24 +257,21 @@ class TestErrorHandling:
         client = HabrClient(timeout=0.1)
         reason = TimeoutError("timed out")
         url_err = urllib.error.URLError(reason)
-        with patch("urllib.request.urlopen", side_effect=url_err):
-            with pytest.raises(HabrTimeoutError):
+        with patch("urllib.request.urlopen", side_effect=url_err), pytest.raises(HabrTimeoutError):
                 client.get_me()
 
     def test_timeout_retried_then_raises(self):
         client = HabrClient(timeout=0.1, retries=1, retry_delay=0)
         reason = TimeoutError("timed out")
         url_err = urllib.error.URLError(reason)
-        with patch("urllib.request.urlopen", side_effect=url_err) as mock_urlopen:
-            with pytest.raises(HabrTimeoutError):
+        with patch("urllib.request.urlopen", side_effect=url_err) as mock_urlopen, pytest.raises(HabrTimeoutError):
                 client.get_me()
         assert mock_urlopen.call_count == 2
 
     def test_urlerror_wrapped_in_habrerror(self):
         client = HabrClient()
         url_err = urllib.error.URLError("connection refused")
-        with patch("urllib.request.urlopen", side_effect=url_err):
-            with pytest.raises(HabrError) as exc_info:
+        with patch("urllib.request.urlopen", side_effect=url_err), pytest.raises(HabrError) as exc_info:
                 client.get_me()
         assert "connection refused" in str(exc_info.value)
 

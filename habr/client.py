@@ -101,7 +101,7 @@ class HabrClient:
                 raw_body = ""
                 try:
                     raw_body = e.read().decode("utf-8", errors="replace")
-                except Exception:
+                except (OSError, ValueError):
                     pass
                 if e.code == 429:
                     raise HabrRateLimitError(e.reason, raw_body)
