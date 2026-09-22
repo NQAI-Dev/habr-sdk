@@ -196,8 +196,72 @@ class HabrClient:
             params["comments"] = ",".join(str(c) for c in comments)
         return self._request("GET", "/comments/thread/", params=params)
 
+    # --- Articles feed ---
+
+    SORT_OPTIONS = frozenset({"date", "rating", "relevance"})
+
+    def get_articles(
+        self,
+        page: int = 1,
+        per_page: int = 20,
+        sort: str = "date",
+        hub: str | None = None,
+        company: str | None = None,
+    ) -> dict[str, Any]:
+        """Получить ленту публикаций (все статьи / новости).
+
+        Args:
+            page: Номер страницы (1-based).
+            per_page: Статей на странице (1–100).
+            sort: Порядок сортировки: ``"date"``, ``"rating"``, ``"relevance"``.
+            hub: Фильтр по псевдониму хаба (например, ``"go"``).
+            company: Фильтр по псевдониму компании (например, ``"yandex"``).
+
+        Returns:
+            Словарь с ключами ``publicationIds``, ``publicationRefs``, ``pagesCount``.
+        """
+        if sort not in self.SORT_OPTIONS:
+            raise ValueError(
+                f"sort must be one of {sorted(self.SORT_OPTIONS)}, got {sort!r}"
+            )
+        params: dict[str, Any] = {
+            "target": "all",
+            "page": page,
+            "perPage": per_page,
+            "sort": sort,
+        }
+        if hub:
+            params["hubIds"] = hub
+        if company:
+            params["companyAlias"] = company
+        return self._request("GET", "/articles/", params=params)
+
+    # --- Companies ---
+
+    def get_companies(
+        self,
+        page: int = 1,
+    ) -> dict[str, Any]:
+        """Получить список компаний на Хабре.
+
+        Returns:
+            Словарь с ключами ``companyIds``, ``companyRefs``, ``pagesCount``.
+        """
+        return self._request("GET", "/companies/", params={"page": page})
+
     # --- Hubs ---
 
     def get_hub_info(self, hub_alias: str) -> dict[str, Any]:
         """Получить профиль хаба."""
         return self._request("GET", f"/hubs/{self._path_segment(hub_alias)}/profile")
+
+    def get_hubs(
+        self,
+        page: int = 1,
+    ) -> dict[str, Any]:
+        """Получить список хабов.
+
+        Returns:
+            Словарь с ключами ``hubIds``, ``hubRefs``, ``pagesCount``.
+        """
+        return self._request("GET", "/hubs/", params={"page": page})

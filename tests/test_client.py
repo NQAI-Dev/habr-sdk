@@ -345,3 +345,103 @@ class TestCommentsThreads:
         client = HabrClient()
         with pytest.raises(ValueError):
             client.get_comments_threads()
+
+
+class TestGetArticles:
+    def test_default_params(self):
+        client = HabrClient()
+        with patch(
+            "urllib.request.urlopen",
+            return_value=make_response({"publicationIds": [], "publicationRefs": {}, "pagesCount": 0}),
+        ) as mock_urlopen:
+            result = client.get_articles()
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "/articles/" in url
+        assert "target=all" in url
+        assert "sort=date" in url
+        assert "page=1" in url
+        assert result["pagesCount"] == 0
+
+    def test_rating_sort(self):
+        client = HabrClient()
+        with patch(
+            "urllib.request.urlopen",
+            return_value=make_response({"publicationIds": ["1"], "publicationRefs": {}, "pagesCount": 10}),
+        ) as mock_urlopen:
+            result = client.get_articles(sort="rating", page=2, per_page=10)
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "sort=rating" in url
+        assert "page=2" in url
+        assert "perPage=10" in url
+        assert result["publicationIds"] == ["1"]
+
+    def test_hub_filter(self):
+        client = HabrClient()
+        with patch(
+            "urllib.request.urlopen",
+            return_value=make_response({"publicationIds": [], "publicationRefs": {}, "pagesCount": 1}),
+        ) as mock_urlopen:
+            client.get_articles(hub="go")
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "hubIds=go" in url
+
+    def test_company_filter(self):
+        client = HabrClient()
+        with patch(
+            "urllib.request.urlopen",
+            return_value=make_response({"publicationIds": [], "publicationRefs": {}, "pagesCount": 1}),
+        ) as mock_urlopen:
+            client.get_articles(company="yandex")
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "companyAlias=yandex" in url
+
+    def test_invalid_sort_raises(self):
+        client = HabrClient()
+        with pytest.raises(ValueError, match="sort must be one of"):
+            client.get_articles(sort="invalid")
+
+
+class TestGetCompanies:
+    def test_returns_companies(self):
+        client = HabrClient()
+        payload = {
+            "companyIds": ["yandex", "vk"],
+            "companyRefs": {},
+            "pagesCount": 5,
+        }
+        with patch(
+            "urllib.request.urlopen", return_value=make_response(payload)
+        ) as mock_urlopen:
+            result = client.get_companies(page=1)
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "/companies/" in url
+        assert "page=1" in url
+        assert result["companyIds"] == ["yandex", "vk"]
+
+    def test_pagination(self):
+        client = HabrClient()
+        with patch(
+            "urllib.request.urlopen",
+            return_value=make_response({"companyIds": [], "companyRefs": {}, "pagesCount": 5}),
+        ) as mock_urlopen:
+            client.get_companies(page=3)
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "page=3" in url
+
+
+class TestGetHubs:
+    def test_returns_hubs(self):
+        client = HabrClient()
+        payload = {
+            "hubIds": ["go", "python"],
+            "hubRefs": {},
+            "pagesCount": 10,
+        }
+        with patch(
+            "urllib.request.urlopen", return_value=make_response(payload)
+        ) as mock_urlopen:
+            result = client.get_hubs(page=2)
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "/hubs/" in url
+        assert "page=2" in url
+        assert result["hubIds"] == ["go", "python"]
