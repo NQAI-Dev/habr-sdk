@@ -65,6 +65,17 @@ def test_get_user_card(mock_urlopen):
 
 
 @patch("urllib.request.urlopen")
+def test_path_segments_are_url_encoded(mock_urlopen):
+    mock_urlopen.return_value = make_response({})
+
+    client = HabrClient()
+    client.get_article("12/34?draft=true")
+
+    req = mock_urlopen.call_args[0][0]
+    assert "/articles/12%2F34%3Fdraft%3Dtrue?" in req.full_url
+
+
+@patch("urllib.request.urlopen")
 def test_get_user_whois(mock_urlopen):
     mock_resp = MagicMock()
     data = {"badgets": [{"title": "author"}]}

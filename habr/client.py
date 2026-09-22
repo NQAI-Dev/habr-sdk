@@ -58,6 +58,11 @@ class HabrClient:
         self.retries = max(0, int(retries))
         self.retry_delay = retry_delay
 
+    @staticmethod
+    def _path_segment(value: str) -> str:
+        """Encode a user-supplied value before placing it in a URL path."""
+        return urllib.parse.quote(str(value), safe="")
+
     def _request(
         self,
         method: str,
@@ -126,11 +131,11 @@ class HabrClient:
 
     def get_user_card(self, username: str) -> dict[str, Any]:
         """Получить карточку пользователя (рейтинг, карма, статистика)."""
-        return self._request("GET", f"/users/{username}/card")
+        return self._request("GET", f"/users/{self._path_segment(username)}/card")
 
     def get_user_whois(self, username: str) -> dict[str, Any]:
         """Получить подробную информацию 'О себе' пользователя."""
-        return self._request("GET", f"/users/{username}/whois")
+        return self._request("GET", f"/users/{self._path_segment(username)}/whois")
 
     def get_user_articles(self, username: str, page: int = 1) -> dict[str, Any]:
         """Список опубликованных статей пользователя."""
@@ -142,11 +147,13 @@ class HabrClient:
 
     def get_article(self, article_id: str) -> dict[str, Any]:
         """Получить статью по ID."""
-        return self._request("GET", f"/articles/{article_id}")
+        return self._request("GET", f"/articles/{self._path_segment(article_id)}")
 
     def get_article_comments(self, article_id: str) -> dict[str, Any]:
         """Получить комментарии к статье."""
-        return self._request("GET", f"/articles/{article_id}/comments")
+        return self._request(
+            "GET", f"/articles/{self._path_segment(article_id)}/comments"
+        )
 
     def get_articles_feed(
         self,
@@ -193,4 +200,4 @@ class HabrClient:
 
     def get_hub_info(self, hub_alias: str) -> dict[str, Any]:
         """Получить профиль хаба."""
-        return self._request("GET", f"/hubs/{hub_alias}/profile")
+        return self._request("GET", f"/hubs/{self._path_segment(hub_alias)}/profile")
