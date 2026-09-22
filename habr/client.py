@@ -265,3 +265,39 @@ class HabrClient:
             Словарь с ключами ``hubIds``, ``hubRefs``, ``pagesCount``.
         """
         return self._request("GET", "/hubs/", params={"page": page})
+
+    def search_hubs(
+        self,
+        query: str,
+        page: int = 1,
+    ) -> dict[str, Any]:
+        """Поиск хабов по ключевому слову.
+
+        Args:
+            query: Поисковый запрос.
+            page: Номер страницы (1-based).
+
+        Returns:
+            Словарь с ключами ``hubIds``, ``hubRefs``, ``pagesCount``,
+            ``searchStatistics``.
+        """
+        return self._request("GET", "/hubs/search/", params={"q": query, "page": page})
+
+    # --- Search ---
+
+    def search_users(
+        self,
+        query: str,
+        page: int = 1,
+    ) -> dict[str, Any]:
+        """Поиск пользователей по ключевому слову.
+
+        Args:
+            query: Поисковый запрос.
+            page: Номер страницы (1-based).
+
+        Returns:
+            Словарь с ключами ``userIds``, ``userRefs``, ``pagesCount``,
+            ``searchStatistics``.
+        """
+        return self._request("GET", "/users/search/", params={"q": query, "page": page})

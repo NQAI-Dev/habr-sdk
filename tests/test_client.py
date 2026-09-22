@@ -445,3 +445,70 @@ class TestGetHubs:
         assert "/hubs/" in url
         assert "page=2" in url
         assert result["hubIds"] == ["go", "python"]
+
+
+class TestSearchHubs:
+    def test_query_and_pagination(self):
+        client = HabrClient()
+        payload = {
+            "hubIds": ["python"],
+            "hubRefs": {},
+            "pagesCount": 2,
+            "searchStatistics": {"articlesCount": 34401, "usersCount": 497},
+        }
+        with patch(
+            "urllib.request.urlopen", return_value=make_response(payload)
+        ) as mock_urlopen:
+            result = client.search_hubs("python", page=2)
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "/hubs/search/" in url
+        assert "q=python" in url
+        assert "page=2" in url
+        assert result["hubIds"] == ["python"]
+        assert "searchStatistics" in result
+
+    def test_returns_search_statistics(self):
+        client = HabrClient()
+        payload = {
+            "hubIds": [],
+            "hubRefs": {},
+            "pagesCount": 0,
+            "searchStatistics": {"hubsCount": 0},
+        }
+        with patch(
+            "urllib.request.urlopen", return_value=make_response(payload)
+        ):
+            result = client.search_hubs("xyzzy_nonexistent")
+        assert result["pagesCount"] == 0
+
+
+class TestSearchUsers:
+    def test_query_and_pagination(self):
+        client = HabrClient()
+        payload = {
+            "userIds": ["NQAI"],
+            "userRefs": {"NQAI": {"alias": "NQAI", "id": 42}},
+            "pagesCount": 1,
+            "searchStatistics": {"usersCount": 40, "articlesCount": 7374},
+        }
+        with patch(
+            "urllib.request.urlopen", return_value=make_response(payload)
+        ) as mock_urlopen:
+            result = client.search_users("golang", page=1)
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "/users/search/" in url
+        assert "q=golang" in url
+        assert "page=1" in url
+        assert result["userIds"] == ["NQAI"]
+        assert result["userRefs"]["NQAI"]["alias"] == "NQAI"
+        assert "searchStatistics" in result
+
+    def test_default_page_is_one(self):
+        client = HabrClient()
+        payload = {"userIds": [], "userRefs": {}, "pagesCount": 0, "searchStatistics": {}}
+        with patch(
+            "urllib.request.urlopen", return_value=make_response(payload)
+        ) as mock_urlopen:
+            client.search_users("nobody_xyzzy")
+        url = mock_urlopen.call_args.args[0].full_url
+        assert "page=1" in url
