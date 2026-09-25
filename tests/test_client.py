@@ -448,6 +448,10 @@ class TestGetHubs:
 
 
 class TestSearchHubs:
+    def test_rejects_empty_query(self):
+        with pytest.raises(ValueError, match="query must not be empty"):
+            HabrClient().search_hubs("  ")
+
     def test_query_and_pagination(self):
         client = HabrClient()
         payload = {
@@ -483,6 +487,10 @@ class TestSearchHubs:
 
 
 class TestSearchUsers:
+    def test_rejects_invalid_page(self):
+        with pytest.raises(ValueError, match="page must be a positive integer"):
+            HabrClient().search_users("python", page=0)
+
     def test_query_and_pagination(self):
         client = HabrClient()
         payload = {

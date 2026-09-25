@@ -63,6 +63,21 @@ class HabrClient:
         """Encode a user-supplied value before placing it in a URL path."""
         return urllib.parse.quote(str(value), safe="")
 
+    @staticmethod
+    def _page(page: int) -> int:
+        """Validate and return a 1-based page number."""
+        if isinstance(page, bool) or not isinstance(page, int) or page < 1:
+            raise ValueError("page must be a positive integer")
+        return page
+
+    @staticmethod
+    def _query(query: str) -> str:
+        """Validate and normalize a search query."""
+        normalized = query.strip()
+        if not normalized:
+            raise ValueError("query must not be empty")
+        return normalized
+
     def _request(
         self,
         method: str,
@@ -140,7 +155,7 @@ class HabrClient:
     def get_user_articles(self, username: str, page: int = 1) -> dict[str, Any]:
         """Список опубликованных статей пользователя."""
         return self._request(
-            "GET", "/articles/", params={"user": username, "page": page}
+            "GET", "/articles/", params={"user": username, "page": self._page(page)}
         )
 
     # --- Articles ---
@@ -224,9 +239,11 @@ class HabrClient:
             raise ValueError(
                 f"sort must be one of {sorted(self.SORT_OPTIONS)}, got {sort!r}"
             )
+        if isinstance(per_page, bool) or not isinstance(per_page, int) or not 1 <= per_page <= 100:
+            raise ValueError("per_page must be an integer between 1 and 100")
         params: dict[str, Any] = {
             "target": "all",
-            "page": page,
+            "page": self._page(page),
             "perPage": per_page,
             "sort": sort,
         }
@@ -247,7 +264,7 @@ class HabrClient:
         Returns:
             Словарь с ключами ``companyIds``, ``companyRefs``, ``pagesCount``.
         """
-        return self._request("GET", "/companies/", params={"page": page})
+        return self._request("GET", "/companies/", params={"page": self._page(page)})
 
     # --- Hubs ---
 
@@ -264,7 +281,7 @@ class HabrClient:
         Returns:
             Словарь с ключами ``hubIds``, ``hubRefs``, ``pagesCount``.
         """
-        return self._request("GET", "/hubs/", params={"page": page})
+        return self._request("GET", "/hubs/", params={"page": self._page(page)})
 
     def search_hubs(
         self,
@@ -281,7 +298,9 @@ class HabrClient:
             Словарь с ключами ``hubIds``, ``hubRefs``, ``pagesCount``,
             ``searchStatistics``.
         """
-        return self._request("GET", "/hubs/search/", params={"q": query, "page": page})
+        return self._request(
+            "GET", "/hubs/search/", params={"q": self._query(query), "page": self._page(page)}
+        )
 
     # --- Search ---
 
@@ -300,4 +319,6 @@ class HabrClient:
             Словарь с ключами ``userIds``, ``userRefs``, ``pagesCount``,
             ``searchStatistics``.
         """
-        return self._request("GET", "/users/search/", params={"q": query, "page": page})
+        return self._request(
+            "GET", "/users/search/", params={"q": self._query(query), "page": self._page(page)}
+        )
