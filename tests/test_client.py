@@ -23,6 +23,11 @@ def test_init_custom():
     assert client.fl == "en"
 
 
+def test_init_rejects_negative_retry_delay():
+    with pytest.raises(ValueError, match="retry_delay must be non-negative"):
+        HabrClient(retries=1, retry_delay=-0.1)
+
+
 @patch("urllib.request.urlopen")
 def test_request_get_params_and_headers(mock_urlopen):
     mock_resp = MagicMock()

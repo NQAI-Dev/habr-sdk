@@ -50,6 +50,8 @@ class HabrClient:
         retries: int = 0,
         retry_delay: float = 0.5,
     ):
+        if retry_delay < 0:
+            raise ValueError("retry_delay must be non-negative")
         self.cookies = cookies or ""
         self.api_key = api_key or self.DEFAULT_API_KEY
         self.hl = hl
