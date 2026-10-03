@@ -24,8 +24,14 @@ def test_init_custom():
 
 
 def test_init_rejects_negative_retry_delay():
-    with pytest.raises(ValueError, match="retry_delay must be non-negative"):
+    with pytest.raises(ValueError, match="retry_delay must be finite and non-negative"):
         HabrClient(retries=1, retry_delay=-0.1)
+
+
+@pytest.mark.parametrize("retry_delay", [float("nan"), float("inf"), float("-inf")])
+def test_init_rejects_non_finite_retry_delay(retry_delay):
+    with pytest.raises(ValueError, match="retry_delay must be finite and non-negative"):
+        HabrClient(retries=1, retry_delay=retry_delay)
 
 
 @patch("urllib.request.urlopen")

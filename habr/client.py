@@ -1,4 +1,5 @@
 import json
+import math
 import time
 import urllib.error
 import urllib.parse
@@ -50,8 +51,8 @@ class HabrClient:
         retries: int = 0,
         retry_delay: float = 0.5,
     ):
-        if retry_delay < 0:
-            raise ValueError("retry_delay must be non-negative")
+        if not math.isfinite(retry_delay) or retry_delay < 0:
+            raise ValueError("retry_delay must be finite and non-negative")
         self.cookies = cookies or ""
         self.api_key = api_key or self.DEFAULT_API_KEY
         self.hl = hl
