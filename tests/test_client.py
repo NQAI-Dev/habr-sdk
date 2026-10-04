@@ -296,6 +296,22 @@ class TestErrorHandling:
                 client.get_me()
         assert mock_urlopen.call_count == 2
 
+    def test_direct_response_read_timeout_is_retried(self):
+        client = HabrClient(timeout=0.1, retries=1, retry_delay=0)
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[TimeoutError("response read timed out"), make_response({"ok": True})],
+        ) as mock_urlopen:
+            assert client.get_me() == {"ok": True}
+        assert mock_urlopen.call_count == 2
+
+    def test_direct_response_read_timeout_raises_habr_timeout_error(self):
+        client = HabrClient(timeout=0.1)
+        with patch(
+            "urllib.request.urlopen", side_effect=TimeoutError("response read timed out")
+        ), pytest.raises(HabrTimeoutError, match="timeout after 0.1s"):
+            client.get_me()
+
     def test_urlerror_wrapped_in_habrerror(self):
         client = HabrClient()
         url_err = urllib.error.URLError("connection refused")

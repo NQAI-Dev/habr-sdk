@@ -141,6 +141,13 @@ class HabrClient:
                         continue
                     raise HabrTimeoutError(f"timeout after {self.timeout}s")
                 raise HabrError(str(e))
+            except TimeoutError:
+                # Reading an already-open response can raise socket.timeout
+                # directly instead of wrapping it in URLError.
+                if attempt < self.retries:
+                    last_error = HabrTimeoutError(f"timeout after {self.timeout}s")
+                    continue
+                raise HabrTimeoutError(f"timeout after {self.timeout}s")
         raise last_error or HabrError("request failed")
 
     # --- Users ---
