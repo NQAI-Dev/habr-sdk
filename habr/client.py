@@ -51,6 +51,8 @@ class HabrClient:
         retries: int = 0,
         retry_delay: float = 0.5,
     ):
+        if not math.isfinite(timeout) or timeout <= 0:
+            raise ValueError("timeout must be finite and positive")
         if not math.isfinite(retry_delay) or retry_delay < 0:
             raise ValueError("retry_delay must be finite and non-negative")
         self.cookies = cookies or ""

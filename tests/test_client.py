@@ -23,6 +23,12 @@ def test_init_custom():
     assert client.fl == "en"
 
 
+@pytest.mark.parametrize("timeout", [0, -0.1, float("nan"), float("inf"), float("-inf")])
+def test_init_rejects_invalid_timeout(timeout):
+    with pytest.raises(ValueError, match="timeout must be finite and positive"):
+        HabrClient(timeout=timeout)
+
+
 def test_init_rejects_negative_retry_delay():
     with pytest.raises(ValueError, match="retry_delay must be finite and non-negative"):
         HabrClient(retries=1, retry_delay=-0.1)
