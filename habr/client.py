@@ -32,6 +32,18 @@ class HabrTimeoutError(HabrError):
     """Request exceeded the configured timeout (including retries)."""
 
 
+def _decode_response(raw: bytes) -> dict[str, Any]:
+    if not raw:
+        return {}
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HabrError("API returned an invalid JSON response") from exc
+    if not isinstance(payload, dict):
+        raise HabrError("API JSON response must be an object")
+    return payload
+
+
 class HabrClient:
     """Легковесный клиент для Habr API (v2 / kek API)."""
 
@@ -120,8 +132,7 @@ class HabrClient:
             )
             try:
                 with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                    raw = resp.read().decode("utf-8")
-                    return json.loads(raw) if raw else {}
+                    return _decode_response(resp.read())
             except urllib.error.HTTPError as e:
                 raw_body = ""
                 try:

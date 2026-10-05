@@ -195,6 +195,23 @@ def make_response(payload: dict, status: int = 200) -> object:
 
 
 class TestErrorHandling:
+    @pytest.mark.parametrize("body", [b"<html>not JSON</html>", b"\xff"])
+    def test_invalid_success_response_raises_habrerror(self, body):
+        response = make_response({})
+        response.read = lambda: body
+        with patch("urllib.request.urlopen", return_value=response), pytest.raises(
+            HabrError, match="invalid JSON response"
+        ):
+            HabrClient().get_me()
+
+    def test_non_object_success_response_raises_habrerror(self):
+        response = make_response({})
+        response.read = lambda: b"[]"
+        with patch("urllib.request.urlopen", return_value=response), pytest.raises(
+            HabrError, match="must be an object"
+        ):
+            HabrClient().get_me()
+
     def test_http_error_raises_habrhttperror_with_status_and_body(self):
         client = HabrClient()
         err = urllib.error.HTTPError(
